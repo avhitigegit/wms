@@ -48,4 +48,14 @@ public class AuthenticationController {
         BeanUtils.copyProperties(user, userDto);
         return ResponseEntity.ok().body(userDto);
     }
+
+    @RequestMapping(value = "/login", method = RequestMethod.POST)
+    public ResponseEntity<UserDto> createTokenWhenLogin(@RequestBody SignUpDto signUpDto) {
+        LOGGER.info("Enter createTokenWhenLogin() in AuthenticationController.");
+        UserDto userDto = new UserDto();
+        final User user = authenticationService.loadUserByLogin(signUpDto);
+        CurrentUser.setUser(user);
+        BeanUtils.copyProperties(user, userDto);
+        return ResponseEntity.ok(userDto);
+    }
 }

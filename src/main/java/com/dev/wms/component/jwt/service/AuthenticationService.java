@@ -4,12 +4,15 @@ import com.dev.wms.common.AppConstant;
 import com.dev.wms.common.UtilService;
 import com.dev.wms.common.enums.Role;
 import com.dev.wms.common.enums.Status;
+import com.dev.wms.component.jwt.model.SignUpDto;
 import com.dev.wms.exception.BadRequestException;
+import com.dev.wms.exception.UnauthorizedException;
 import com.dev.wms.model.User;
 import com.dev.wms.repository.UserRepository;
 import com.dev.wms.service.EmailService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -78,5 +81,21 @@ public class AuthenticationService {
 //            throw new BadResponseException("Resource Not Found Exception.");
         }
         return user;
+    }
+
+    //Authenticate the login user
+    public User loadUserByLogin(SignUpDto signUpDto) {
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        User user = userRepository.findByEmailAndStatusSeq(signUpDto.getEmail(), Status.APPROVED.getStatusSeq());
+        if (user.getStatusSeq().equals(Status.APPROVED.getStatusSeq())) {
+            String hashedPassword = user.getPassword();
+            if (passwordEncoder.matches(signUpDto.getPassword(), hashedPassword)) {
+                return user;
+            } else {
+                throw new UnauthorizedException("Authentication Failed. Your Password incorrect");
+            }
+        } else {
+            throw new UnauthorizedException("Authentication Failed. Your Username incorrect");
+        }
     }
 }
