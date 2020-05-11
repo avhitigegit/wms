@@ -4,9 +4,12 @@ import com.dev.wms.common.AppConstant;
 import com.dev.wms.common.CurrentUser;
 import com.dev.wms.common.enums.Status;
 import com.dev.wms.component.jwt.service.JwtTokenUtil;
+import com.dev.wms.exception.ExpiredTokenException;
+import com.dev.wms.exception.UnauthorizedException;
 import com.dev.wms.model.User;
 import com.dev.wms.repository.UserRepository;
 import io.jsonwebtoken.ExpiredJwtException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -25,6 +28,7 @@ public class JwtRequestFilter extends OncePerRequestFilter implements HandlerInt
     private final UserRepository userRepository;
     private final JwtTokenUtil jwtTokenUtil;
 
+    @Autowired
     public JwtRequestFilter(UserRepository userRepository, JwtTokenUtil jwtTokenUtil) {
         this.userRepository = userRepository;
         this.jwtTokenUtil = jwtTokenUtil;
@@ -53,9 +57,9 @@ public class JwtRequestFilter extends OncePerRequestFilter implements HandlerInt
             try {
                 email = jwtTokenUtil.getUsernameFromToken(jwtToken);
             } catch (ExpiredJwtException e) {
-//                throw new ExpiredTokenException("Token Has Been Expired");
+                throw new ExpiredTokenException("Token Has Been Expired");
             } catch (Exception e) {
-//                throw new UnauthorizedException("Authentication token invalid");
+                throw new UnauthorizedException("Authentication token invalid");
             }
         }
 

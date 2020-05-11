@@ -1,9 +1,10 @@
-package com.dev.wms.common;
+package com.dev.wms.common.util;
 
 import com.dev.wms.common.enums.Status;
 import com.dev.wms.exception.BadRequestException;
 import com.dev.wms.model.User;
 import com.dev.wms.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,7 @@ public class UtilService {
 
     private final UserRepository userRepository;
 
+    @Autowired
     public UtilService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
@@ -42,25 +44,6 @@ public class UtilService {
             throw new BadRequestException("Does Not Pass The Correct Password.");
         }
     }
-
-    //Check the currently logged user's role
-//    public String getRoleOfCurrentUser() {
-//        String status = null;
-//        User user = userRepository.findByUserSeqAndStatusSeq(CurrentUser.getUser().getId(), AppConstant.ACTIVE);
-//        String role = user.getRole();
-//        if (role.equals("ADMIN")) {
-//            status = "ADMIN";
-//            return status;
-//        } else if (role.equals("STANDARD USER")) {
-//            status = "STANDARD USER";
-//            return status;
-//        } else if (role.equals("PENDING")) {
-//            status = "PENDING";
-//            return status;
-//        } else {
-//            throw new BadResponseException("Role Not Found Exception");
-//        }
-//    }
 
     //Check user availability
     public boolean checkUserAvailability(String email) {

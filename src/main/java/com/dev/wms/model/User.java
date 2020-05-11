@@ -1,19 +1,17 @@
 package com.dev.wms.model;
 
-import com.dev.wms.common.UtilService;
-import com.dev.wms.common.enums.Role;
 import com.dev.wms.common.enums.Status;
+import com.dev.wms.common.util.UtilService;
+import com.dev.wms.dto.UserDto;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -60,13 +58,124 @@ public class User implements Serializable {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_seq")
+    private List<Contact> contactList;
+    @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_seq")
+    private List<Description> descriptionList;
+    @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_seq")
+    private List<Image> imageList;
+    @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_seq")
+    private List<Location> locationList;
+
+    @Transient
+    private List<String> contactListSeq;
+    @Transient
+    private List<String> descriptionListSeq;
+    @Transient
+    private List<String> imageListSeq;
+    @Transient
+    private List<String> locationListSeq;
+
+    public static UserDto setUserInRegistration(User originalUser, UserDto userDto) {
+        userDto.setUserSeq(originalUser.getUserSeq());
+        userDto.setEmail(originalUser.getEmail());
+        userDto.setPassword(originalUser.getPassword());
+        userDto.setFirstName(originalUser.getFirstName());
+        userDto.setMiddleName(originalUser.getMiddleName());
+        userDto.setLastName(originalUser.getLastName());
+        userDto.setOtherNames(originalUser.getOtherNames());
+        userDto.setTitle(originalUser.getTitle());
+        userDto.setDescriptionPictureUrl(originalUser.getDescriptionPictureUrl());
+        userDto.setDateOfBirth(originalUser.getDateOfBirth());
+        userDto.setEmailVerifiedCode(originalUser.getEmailVerifiedCode());
+        userDto.setPasswordVerifiedCode(originalUser.getPasswordVerifiedCode());
+        userDto.setIsEmailVerified(originalUser.getIsEmailVerified());
+        userDto.setIsPasswordReset(originalUser.getIsPasswordReset());
+        userDto.setStatusSeq(originalUser.getStatusSeq());
+        userDto.setRoleSeq(originalUser.getRoleSeq());
+        userDto.setCreatedAt(originalUser.getCreatedAt());
+        userDto.setUpdatedAt(originalUser.getUpdatedAt());
+        return userDto;
+    }
+
+    public List<String> getContactListSeq() {
+        if (this.contactListSeq != null) {
+            return this.contactListSeq;
+        }
+        if (this.contactList != null) {
+            for (Contact contact : contactList) {
+                contactListSeq.add(contact.getContactSeq());
+            }
+            return contactListSeq;
+        }
+        return contactListSeq;
+    }
+
+    public void setContactListSeq(List<String> contactListSeq) {
+        this.contactListSeq = contactListSeq;
+    }
+
+    public List<String> getDescriptionListSeq() {
+        if (this.descriptionListSeq != null) {
+            return this.descriptionListSeq;
+        }
+        if (this.descriptionList != null) {
+            for (Description description : descriptionList) {
+                descriptionListSeq.add(description.getDescriptionSeq());
+            }
+            return descriptionListSeq;
+        }
+        return descriptionListSeq;
+    }
+
+    public void setDescriptionListSeq(List<String> descriptionListSeq) {
+        this.descriptionListSeq = descriptionListSeq;
+    }
+
+    public List<String> getImageListSeq() {
+        if (this.imageListSeq != null) {
+            return this.imageListSeq;
+        }
+        if (this.imageList != null) {
+            for (Image image : imageList) {
+                imageListSeq.add(image.getImageSeq());
+            }
+            return imageListSeq;
+        }
+        return imageListSeq;
+    }
+
+    public void setImageListSeq(List<String> imageListSeq) {
+        this.imageListSeq = imageListSeq;
+    }
+
+    public List<String> getLocationListSeq() {
+        if (this.locationListSeq != null) {
+            return this.locationListSeq;
+        }
+        if (this.locationList != null) {
+            for (Location location : locationList) {
+                locationListSeq.add(location.getLocationSeq());
+            }
+            return locationListSeq;
+        }
+        return locationListSeq;
+    }
+
     public static User initFrom(User user) {
         user.setPassword(UtilService.bCryptPassword(user.getPassword()));
         user.setUserSeq("USER-" + UtilService.generateRandomString());
         user.setStatusSeq(Status.PENDING.getStatusSeq());
         user.setEmailVerifiedCode(UtilService.generateRandomString());
         user.setIsEmailVerified(false);
-        user.setRoleSeq(Role.VENDER.getRoleSeq());
         return user;
+    }
+
+    public void setLocationListSeq(List<String> locationListSeq) {
+        this.locationListSeq = locationListSeq;
     }
 }

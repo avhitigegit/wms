@@ -21,4 +21,5 @@ public class LocationDto implements Serializable {
     private Integer statusSeq;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String userSeq;
 }

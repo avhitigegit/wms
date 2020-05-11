@@ -18,4 +18,5 @@ public class DescriptionDto implements Serializable {
     private Integer statusSeq;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String userSeq;
 }

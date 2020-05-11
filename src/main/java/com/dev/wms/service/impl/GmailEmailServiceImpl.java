@@ -1,13 +1,16 @@
 package com.dev.wms.service.impl;
 
+import com.dev.wms.exception.EmailSendingException;
 import com.dev.wms.service.EmailService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 public class GmailEmailServiceImpl implements EmailService {
 
+    @Autowired
     private JavaMailSender javaMailSender;
 
     @Override
@@ -19,7 +22,7 @@ public class GmailEmailServiceImpl implements EmailService {
             email.setText(mailBody);
             javaMailSender.send(email);
         } catch (Exception e) {
-//            throw new EmailSendingException("Email Not Sending !");
+            throw new EmailSendingException("Email Not Sending !");
         }
     }
 }

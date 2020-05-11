@@ -7,7 +7,7 @@ public enum Role {
 
     ADMIN(1, "ADMIN"),
     CUSTOMER(2, "CUSTOMER"),
-    VENDER(3, "VENDER");
+    VENDOR(3, "VENDOR");
 
     private final Integer roleSeq;
     private final String role;

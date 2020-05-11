@@ -1,14 +1,14 @@
 package com.dev.wms.model;
 
+import com.dev.wms.common.CurrentUser;
+import com.dev.wms.common.enums.Status;
+import com.dev.wms.common.util.UtilService;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -38,4 +38,14 @@ public class Description implements Serializable {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+    @Basic
+    @Column(name = "user_seq", nullable = false, updatable = false, insertable = false)
+    private String userSeq;
+
+    public static Description initFrom(Description description) {
+        description.setDescriptionSeq("DESCRIPTION-" + UtilService.generateRandomString());
+        description.setUserSeq(CurrentUser.getUser().getUserSeq());
+        description.setStatusSeq(Status.APPROVED.getStatusSeq());
+        return description;
+    }
 }

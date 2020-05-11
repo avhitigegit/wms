@@ -1,17 +1,21 @@
 package com.dev.wms.component.jwt.service;
 
 import com.dev.wms.common.AppConstant;
-import com.dev.wms.common.UtilService;
 import com.dev.wms.common.enums.Role;
 import com.dev.wms.common.enums.Status;
+import com.dev.wms.common.util.UtilService;
 import com.dev.wms.component.jwt.model.SignUpDto;
+import com.dev.wms.dto.PasswordResetDto;
 import com.dev.wms.exception.BadRequestException;
+import com.dev.wms.exception.BadResponseException;
 import com.dev.wms.exception.UnauthorizedException;
 import com.dev.wms.model.User;
 import com.dev.wms.repository.UserRepository;
 import com.dev.wms.service.EmailService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +30,7 @@ public class AuthenticationService {
     private final JwtTokenUtil jwtTokenUtil;
     private final EmailService emailService;
 
+    @Autowired
     public AuthenticationService(UtilService utilService,
                                  UserRepository userRepository,
                                  JwtTokenUtil jwtTokenUtil,
@@ -36,23 +41,29 @@ public class AuthenticationService {
         this.emailService = emailService;
     }
 
-    //Generate a new user and send email
-    public User registerUserAndSendEmail(User user) {
+    public User registerUserAndSendEmail(SignUpDto signUpDto) {
         LOGGER.info("Enter registerUserAndSendEmail() in AuthenticationService.");
+        User user = new User();
+        if (signUpDto.getRole().equals(Role.CUSTOMER.getRole())) {
+            user.setRoleSeq(Role.CUSTOMER.getRoleSeq());
+        } else if (signUpDto.getRole().equals(Role.VENDOR.getRole())) {
+            user.setRoleSeq(Role.VENDOR.getRoleSeq());
+        }
+        BeanUtils.copyProperties(signUpDto, user);
         if (this.utilService.checkUserAvailability(user.getEmail()) == false) {
             user = User.initFrom(user);
             this.userRepository.saveAndFlush(user);
             String token = this.jwtTokenUtil.generateTokenWithPinAndEmail(user);
             String emailBody = AppConstant.EMAIL_VERIFICATION_BODY + token;
-            emailService.sendEmail(user.getEmail(), AppConstant.EMAIL_VERIFICATION_SUBJECT, emailBody);
+            this.emailService.sendEmail(user.getEmail(), AppConstant.EMAIL_VERIFICATION_SUBJECT, emailBody);
             user.setPasswordVerifiedCode(emailBody);
             return user;
         } else if (this.userRepository.findByEmailAndStatusSeq(user.getEmail(), Status.PENDING.getStatusSeq()).getEmail().equals(user.getEmail())) {
             user = this.userRepository.findByEmailAndStatusSeq(user.getEmail(), Status.PENDING.getStatusSeq());
             this.userRepository.save(user);
-            String token = jwtTokenUtil.generateTokenWithPinAndEmail(user);
+            String token = this.jwtTokenUtil.generateTokenWithPinAndEmail(user);
             String emailBody = AppConstant.EMAIL_VERIFICATION_BODY + token;
-            emailService.sendEmail(user.getEmail(), AppConstant.EMAIL_VERIFICATION_SUBJECT, emailBody);
+            this.emailService.sendEmail(user.getEmail(), AppConstant.EMAIL_VERIFICATION_SUBJECT, emailBody);
             user.setPasswordVerifiedCode(emailBody);
             return user;
         } else {
@@ -60,33 +71,31 @@ public class AuthenticationService {
         }
     }
 
-    //Email verification request
     public User emailVerificationFromRegisteredUser(String token) {
         LOGGER.info("Enter emailVerificationFromRegisteredUser() in UserService.");
-        List<String> UserEmailAndPinFromToken = jwtTokenUtil.getUserEmailAndPinFromToken(token);
+        List<String> UserEmailAndPinFromToken = this.jwtTokenUtil.getUserEmailAndPinFromToken(token);
         String generatedPinOfToken = UserEmailAndPinFromToken.get(0);
         String userEmailOfToken = UserEmailAndPinFromToken.get(1);
-        User user = userRepository.findByEmailAndStatusSeq(userEmailOfToken, Status.PENDING.getStatusSeq());
+        User user = this.userRepository.findByEmailAndStatusSeq(userEmailOfToken, Status.PENDING.getStatusSeq());
         if (user != null) {
-            if (utilService.matchingEmailGeneratedPinWithActual(userEmailOfToken, generatedPinOfToken) == true && user.getStatusSeq().equals(Status.PENDING.getStatusSeq())) {
+            if (this.utilService.matchingEmailGeneratedPinWithActual(userEmailOfToken, generatedPinOfToken) == true && user.getStatusSeq().equals(Status.PENDING.getStatusSeq())) {
                 user.setIsEmailVerified(true);
                 user.setStatusSeq(Status.APPROVED.getStatusSeq());
-                user.setRoleSeq(Role.VENDER.getRoleSeq());
-                userRepository.saveAndFlush(user);
-                user = userRepository.findByEmailAndStatusSeq(userEmailOfToken, Status.APPROVED.getStatusSeq());
+                user.setRoleSeq(Role.VENDOR.getRoleSeq());
+                this.userRepository.saveAndFlush(user);
+                user = this.userRepository.findByEmailAndStatusSeq(userEmailOfToken, Status.APPROVED.getStatusSeq());
             } else {
-                throw new BadRequestException("The Request Cannot Be Fulfilled Due To Bad Syntax Exception.");
+                throw new BadResponseException("The Request Cannot Be Fulfilled Due To Bad Syntax Exception.");
             }
         } else {
-//            throw new BadResponseException("Resource Not Found Exception.");
+            throw new BadResponseException("Resource Not Found Exception.");
         }
         return user;
     }
 
-    //Authenticate the login user
     public User loadUserByLogin(SignUpDto signUpDto) {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        User user = userRepository.findByEmailAndStatusSeq(signUpDto.getEmail(), Status.APPROVED.getStatusSeq());
+        User user = this.userRepository.findByEmailAndStatusSeq(signUpDto.getEmail(), Status.APPROVED.getStatusSeq());
         if (user.getStatusSeq().equals(Status.APPROVED.getStatusSeq())) {
             String hashedPassword = user.getPassword();
             if (passwordEncoder.matches(signUpDto.getPassword(), hashedPassword)) {
@@ -98,4 +107,63 @@ public class AuthenticationService {
             throw new UnauthorizedException("Authentication Failed. Your Username incorrect");
         }
     }
+
+//    public String deactivateOwnProfile() {
+//        LOGGER.info("Enter deactivateOwnProfile() in UserService.");
+//        String deactivateStatus = null;
+//        User user = this.userRepository.findByUserSeqAndStatusSeq(CurrentUser.getUser().getUserSeq(), Status.APPROVED.getStatusSeq());
+//        if (user.getEmail() != null) {
+//            deactivateStatus = "Deactivate User Successfully.";
+//            this.userRepository.deleteById(user.getUserSeq());
+//            return deactivateStatus;
+//        } else {
+//            throw new BadResponseException("Resource Not Found Exception.");
+//        }
+//    }
+
+    public String sendEmailForPasswordResetRequest(String email) {
+        LOGGER.info("Enter sendEmailForPasswordResetRequest() in UserService.");
+        String response = null;
+        try {
+            User user = this.userRepository.findByEmailAndStatusSeq(email, Status.APPROVED.getStatusSeq());
+            if (user != null) {
+                user.setPasswordVerifiedCode(UtilService.generateRandomString());
+                user.setIsPasswordReset(false);
+                this.userRepository.saveAndFlush(user);
+                String token = this.jwtTokenUtil.generateTokenWithPinAndEmail(user);
+                String emailBody = AppConstant.PASSWORD_RESET_VERIFICATION_BODY + token;
+                this.emailService.sendEmail(user.getEmail(), AppConstant.PASSWORD_RESET_VERIFICATION_SUBJECT, emailBody);
+                response = "Email Send Successfully " + emailBody;
+            } else {
+                throw new BadResponseException("Resource Not Found Exception.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return response;
+    }
+
+    public User validatePasswordResetRequestAndSaveNewPassword(String token, PasswordResetDto passwordResetDto) {
+        LOGGER.info("Enter validatePasswordResetRequestAndSaveNewPassword() in UserService.");
+        User user = new User();
+        try {
+            List<String> UserEmailAndPinFromToken = this.jwtTokenUtil.getUserEmailAndPinFromToken(token);
+            String generatedPinOfToken = UserEmailAndPinFromToken.get(0);
+            String userEmailOfToken = UserEmailAndPinFromToken.get(1);
+            user = this.userRepository.findByEmailAndStatusSeq(userEmailOfToken, Status.APPROVED.getStatusSeq());
+            if (user != null && passwordResetDto.getNewPassword().equals(passwordResetDto.getConfirmPassword()) && user.getIsPasswordReset() == false) {
+                if (utilService.matchingEmailGeneratedPinWithActual(userEmailOfToken, generatedPinOfToken) == true) {
+                    user.setIsPasswordReset(true);
+                    this.userRepository.saveAndFlush(user);
+                    user = this.userRepository.findByUserSeqAndStatusSeq(user.getUserSeq(), Status.APPROVED.getStatusSeq());
+                }
+            } else {
+                throw new BadResponseException("Resource Not Found Exception.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return user;
+    }
+
 }

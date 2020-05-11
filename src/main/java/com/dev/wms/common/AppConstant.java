@@ -11,13 +11,13 @@ public class AppConstant {
     // EMAIL VERIFICATION
     //=============================
     public static final String EMAIL_VERIFICATION_SUBJECT = "Email Verification";
-    public static final String EMAIL_VERIFICATION_BODY = "To confirm your account " + "\n" + "Please click here : http://localhost:8080/web/verification?token=";
+    public static final String EMAIL_VERIFICATION_BODY = "To confirm your account " + "\n" + "Please click here : http://localhost:8080/verification?token=";
 
     //=============================
     // PASSWORD RESET
     //=============================
-    public static final String PASSWORD_RESET_VERIFICATION_SUBJECT = "Reset Your TEBEKA Password";
-    public static final String PASSWORD_RESET_VERIFICATION_BODY = "To reset Your password " + "\n" + "Please click here : http://localhost:8080/api/user/pwd-verification?token=";
+    public static final String PASSWORD_RESET_VERIFICATION_SUBJECT = "Password Reset";
+    public static final String PASSWORD_RESET_VERIFICATION_BODY = "To reset Your password " + "\n" + "Please click here : http://localhost:8080/pwd-verification?token=";
 
     //=============================
     // JSON WEB TOKEN

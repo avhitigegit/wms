@@ -9,7 +9,7 @@ import lombok.Setter;
 public class SignUpDto {
     private String email;
     private String password;
-//    private String firstName;
+    private String role;
 
     public static String passwordvalidation(String password) {
         String pattern = "(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}";
