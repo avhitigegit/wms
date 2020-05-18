@@ -28,7 +28,7 @@ public class ContactService {
     }
 
     public void saveContact(ContactDto contactDto) {
-        LOGGER.info("Enter saveContact() in AddressService.");
+        LOGGER.info("Enter saveContact() in ContactService. " + CurrentUser.getUser().getEmail());
         try {
             if (contactDto != null) {
                 Contact contact = new Contact();
@@ -42,7 +42,7 @@ public class ContactService {
     }
 
     public void saveContactList(List<ContactDto> contactDtoList) {
-        LOGGER.info("Enter saveContactList() in AddressService.");
+        LOGGER.info("Enter saveContactList() in ContactService. " + CurrentUser.getUser().getEmail());
         try {
             if (contactDtoList != null) {
                 for (ContactDto contactDto : contactDtoList) {
@@ -58,7 +58,7 @@ public class ContactService {
     }
 
     public List<ContactDto> getContactList() {
-        LOGGER.info("Enter getContactList() in AddressService.");
+        LOGGER.info("Enter getContactList() in ContactService. " + CurrentUser.getUser().getEmail());
         List<ContactDto> contactDtoList = new ArrayList<>();
         try {
             List<Contact> contactList = this.contactRepository.findByUserSeqAndStatusSeq(CurrentUser.getUser().getUserSeq(), Status.APPROVED.getStatusSeq());
@@ -71,12 +71,12 @@ public class ContactService {
             }
             return contactDtoList;
         } catch (Exception e) {
-            throw new BadResponseException("Resource Not Found Exception.");
+            throw new BadResponseException(e.getMessage());
         }
     }
 
     public ContactDto updateContact(ContactDto tempContactDto) {
-        LOGGER.info("Enter updateContact() in AddressService.");
+        LOGGER.info("Enter updateContact() in ContactService. " + CurrentUser.getUser().getEmail());
         try {
             if (tempContactDto.getContactSeq() != null) {
                 Contact contact = this.contactRepository.findByContactSeqAndStatusSeq(tempContactDto.getContactSeq(), Status.APPROVED.getStatusSeq());
@@ -93,11 +93,11 @@ public class ContactService {
         } catch (Exception e) {
             throw new BadRequestException(e.getMessage());
         }
-        return this.getSingleContact(tempContactDto.getContactSeq());
+        return this.getSingleContactByID(tempContactDto.getContactSeq());
     }
 
     public void deactivateContact(ContactDto contactDto) {
-        LOGGER.info("Enter deactivateContact() in AddressService.");
+        LOGGER.info("Enter deactivateContact() in ContactService. " + CurrentUser.getUser().getEmail());
         try {
             Contact contact = this.contactRepository.findByContactSeqAndStatusSeq(contactDto.getContactSeq(), Status.APPROVED.getStatusSeq());
             if (contact != null) {
@@ -111,8 +111,8 @@ public class ContactService {
 
     }
 
-    public ContactDto getSingleContact(String contactSeq) {
-        LOGGER.info("Enter getSingleContact() in AddressService.");
+    public ContactDto getSingleContactByID(String contactSeq) {
+        LOGGER.info("Enter getSingleContact() in ContactService. " + CurrentUser.getUser().getEmail());
         ContactDto contactDto = new ContactDto();
         try {
             Contact contact = this.contactRepository.findByContactSeqAndStatusSeq(contactSeq, Status.APPROVED.getStatusSeq());
@@ -120,8 +120,26 @@ public class ContactService {
                 BeanUtils.copyProperties(contact, contactDto);
             }
         } catch (Exception e) {
-            throw new BadRequestException(e.getMessage());
+            throw new BadResponseException(e.getMessage());
         }
         return contactDto;
+    }
+
+    public List<ContactDto> getAllContactList() {
+        LOGGER.info("Enter getAllContactList() in ContactService. " + CurrentUser.getUser().getEmail());
+        List<ContactDto> contactDtoList = new ArrayList<>();
+        try {
+            List<Contact> contactList = this.contactRepository.findAll();
+            if (contactList != null) {
+                for (Contact contact : contactList) {
+                    ContactDto contactDto = new ContactDto();
+                    BeanUtils.copyProperties(contact, contactDto);
+                    contactDtoList.add(contactDto);
+                }
+            }
+            return contactDtoList;
+        } catch (Exception e) {
+            throw new BadResponseException(e.getMessage());
+        }
     }
 }

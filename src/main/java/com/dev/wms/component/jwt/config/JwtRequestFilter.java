@@ -4,6 +4,7 @@ import com.dev.wms.common.AppConstant;
 import com.dev.wms.common.CurrentUser;
 import com.dev.wms.common.enums.Status;
 import com.dev.wms.component.jwt.service.JwtTokenUtil;
+import com.dev.wms.exception.BadResponseException;
 import com.dev.wms.exception.ExpiredTokenException;
 import com.dev.wms.exception.UnauthorizedException;
 import com.dev.wms.model.User;
@@ -64,12 +65,16 @@ public class JwtRequestFilter extends OncePerRequestFilter implements HandlerInt
         }
 
         // Once we get the token validate it.
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            User user = this.userRepository.findByEmailAndStatusSeq(email, Status.APPROVED.getStatusSeq());
-            if (jwtTokenUtil.validateToken(jwtToken, user)) {
-                CurrentUser.setUser(user);
-                chain.doFilter(request, response);
+        try {
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                User user = this.userRepository.findByEmailAndStatusSeq(email, Status.APPROVED.getStatusSeq());
+                if (jwtTokenUtil.validateToken(jwtToken, user)) {
+                    CurrentUser.setUser(user);
+                    chain.doFilter(request, response);
+                }
             }
+        } catch (Exception e) {
+            throw new BadResponseException(e.getMessage());
         }
     }
 }

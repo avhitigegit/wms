@@ -27,9 +27,8 @@ public class LocationService {
         this.locationRepository = locationRepository;
     }
 
-    //Save my address
-    public void saveAddress(LocationDto locationDto) {
-        LOGGER.info("Enter saveAddress() in AddressService.");
+    public void saveLocation(LocationDto locationDto) {
+        LOGGER.info("Enter saveLocation() in LocationService. " + CurrentUser.getUser().getEmail());
         try {
             if (locationDto != null) {
                 Location location = new Location();
@@ -42,9 +41,8 @@ public class LocationService {
         }
     }
 
-    //Save my address list
-    public void saveAddressList(List<LocationDto> locationDtoList) {
-        LOGGER.info("Enter saveAddressList() in AddressService.");
+    public void saveLocationList(List<LocationDto> locationDtoList) {
+        LOGGER.info("Enter saveLocationList() in LocationService. " + CurrentUser.getUser().getEmail());
         try {
             if (locationDtoList != null) {
                 for (LocationDto locationDto : locationDtoList) {
@@ -59,9 +57,8 @@ public class LocationService {
         }
     }
 
-    //Get my all addresses
-    public List<LocationDto> getMyAddresses() {
-        LOGGER.info("Enter getMyAddresses() in AddressService.");
+    public List<LocationDto> getMyLocationList() {
+        LOGGER.info("Enter getMyLocationList() in LocationService. " + CurrentUser.getUser().getEmail());
         List<LocationDto> locationDtoList = new ArrayList<>();
         try {
             List<Location> locationList = locationRepository.findByUserSeqAndStatusSeq(CurrentUser.getUser().getUserSeq(), Status.APPROVED.getStatusSeq());
@@ -78,9 +75,8 @@ public class LocationService {
         }
     }
 
-    //Update my address record
-    public LocationDto updateAddress(LocationDto tempLocationDto) {
-        LOGGER.info("Enter updateAddress() in AddressService.");
+    public LocationDto updateLocation(LocationDto tempLocationDto) {
+        LOGGER.info("Enter updateLocation() in LocationService. " + CurrentUser.getUser().getEmail());
         try {
             if (tempLocationDto.getLocationSeq() != null) {
                 Location location = this.locationRepository.findByLocationSeqAndStatusSeq(tempLocationDto.getLocationSeq(), Status.APPROVED.getStatusSeq());
@@ -101,12 +97,11 @@ public class LocationService {
         } catch (BadRequestException e) {
             throw new BadRequestException(e.getMessage());
         }
-        return this.getSingleAddress(tempLocationDto.getLocationSeq());
+        return this.getSingleLocationByID(tempLocationDto.getLocationSeq());
     }
 
-    //Delete my address record
-    public void deactivateAddress(LocationDto locationDto) {
-        LOGGER.info("Enter deactivateAddress() in AddressService.");
+    public void deactivateLocation(LocationDto locationDto) {
+        LOGGER.info("Enter deactivateLocation() in LocationService. " + CurrentUser.getUser().getEmail());
         try {
             Location location = this.locationRepository.findByLocationSeqAndStatusSeq(locationDto.getLocationSeq(), Status.APPROVED.getStatusSeq());
             if (location != null) {
@@ -119,9 +114,8 @@ public class LocationService {
         }
     }
 
-    //Get single address record
-    public LocationDto getSingleAddress(String locationSeq) {
-        LOGGER.info("Enter getSingleAddress() in AddressService.");
+    public LocationDto getSingleLocationByID(String locationSeq) {
+        LOGGER.info("Enter getSingleLocation() in LocationService. " + CurrentUser.getUser().getEmail());
         LocationDto locationDto = new LocationDto();
         try {
             Location location = this.locationRepository.findByLocationSeqAndStatusSeq(locationSeq, Status.APPROVED.getStatusSeq());
@@ -129,9 +123,27 @@ public class LocationService {
                 BeanUtils.copyProperties(location, locationDto);
             }
         } catch (Exception e) {
-            throw new BadRequestException(e.getMessage());
+            throw new BadResponseException(e.getMessage());
         }
         return locationDto;
+    }
+
+    public List<LocationDto> getAllLocationList() {
+        LOGGER.info("Enter getAllLocationList() in LocationService. " + CurrentUser.getUser().getEmail());
+        List<LocationDto> locationDtoList = new ArrayList<>();
+        try {
+            List<Location> locationList = this.locationRepository.findAll();
+            if (locationList != null) {
+                for (Location location : locationList) {
+                    LocationDto locationDto = new LocationDto();
+                    BeanUtils.copyProperties(location, locationDto);
+                    locationDtoList.add(locationDto);
+                }
+            }
+            return locationDtoList;
+        } catch (Exception e) {
+            throw new BadResponseException(e.getMessage());
+        }
     }
 
 }

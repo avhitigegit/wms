@@ -4,6 +4,7 @@ import com.dev.wms.common.CurrentUser;
 import com.dev.wms.common.enums.Status;
 import com.dev.wms.dto.ImageDto;
 import com.dev.wms.exception.BadRequestException;
+import com.dev.wms.exception.BadResponseException;
 import com.dev.wms.model.Image;
 import com.dev.wms.repository.ImageRepository;
 import org.apache.logging.log4j.LogManager;
@@ -18,7 +19,7 @@ import java.util.List;
 
 @Service
 public class ImageService {
-    private static final Logger LOGGER = LogManager.getLogger(LocationService.class);
+    private static final Logger LOGGER = LogManager.getLogger(ImageService.class);
 
     private final ImageRepository imageRepository;
 
@@ -27,10 +28,8 @@ public class ImageService {
         this.imageRepository = imageRepository;
     }
 
-
-    //Save my address
-    public void saveAddress(ImageDto imageDto) {
-        LOGGER.info("Enter saveAddress() in AddressService.");
+    public void saveImage(ImageDto imageDto) {
+        LOGGER.info("Enter saveImage() in ImageService. " + CurrentUser.getUser().getEmail());
         try {
             if (imageDto != null) {
                 Image image = new Image();
@@ -43,9 +42,8 @@ public class ImageService {
         }
     }
 
-    //Save my address list
-    public void saveAddressList(List<ImageDto> imageDtoList) {
-        LOGGER.info("Enter saveAddressList() in AddressService.");
+    public void saveImageList(List<ImageDto> imageDtoList) {
+        LOGGER.info("Enter saveImageList() in ImageService. " + CurrentUser.getUser().getEmail());
         try {
             if (imageDtoList != null) {
                 for (ImageDto imageDto : imageDtoList) {
@@ -60,9 +58,8 @@ public class ImageService {
         }
     }
 
-    //Get my all addresses
-    public List<ImageDto> getMyAddresses() {
-        LOGGER.info("Enter getMyAddresses() in AddressService.");
+    public List<ImageDto> getMyImageList() {
+        LOGGER.info("Enter getMyImageList() in ImageService. " + CurrentUser.getUser().getEmail());
         List<ImageDto> imageDtoList = new ArrayList<>();
         try {
             List<Image> imageList = imageRepository.findByUserSeqAndStatusSeq(CurrentUser.getUser().getUserSeq(), Status.APPROVED.getStatusSeq());
@@ -75,13 +72,12 @@ public class ImageService {
             }
             return imageDtoList;
         } catch (Exception e) {
-            throw new BadRequestException(e.getMessage());
+            throw new BadResponseException(e.getMessage());
         }
     }
 
-    //Update my address record
-    public ImageDto updateAddress(ImageDto tempImageDto) {
-        LOGGER.info("Enter updateAddress() in AddressService.");
+    public ImageDto updateImage(ImageDto tempImageDto) {
+        LOGGER.info("Enter updateImage() in ImageService. " + CurrentUser.getUser().getEmail());
         try {
             if (tempImageDto.getImageSeq() != null) {
                 Image image = this.imageRepository.findByImageSeqAndStatusSeq(tempImageDto.getImageSeq(), Status.APPROVED.getStatusSeq());
@@ -97,12 +93,11 @@ public class ImageService {
         } catch (BadRequestException e) {
             throw new BadRequestException(e.getMessage());
         }
-        return this.getSingleAddress(tempImageDto.getImageSeq());
+        return this.getSingleImageByID(tempImageDto.getImageSeq());
     }
 
-    //Delete my address record
-    public void deactivateAddress(ImageDto imageDto) {
-        LOGGER.info("Enter deactivateAddress() in AddressService.");
+    public void deactivateImage(ImageDto imageDto) {
+        LOGGER.info("Enter deactivateImage() in ImageService. " + CurrentUser.getUser().getEmail());
         try {
             Image image = this.imageRepository.findByImageSeqAndStatusSeq(imageDto.getImageSeq(), Status.APPROVED.getStatusSeq());
             if (image != null) {
@@ -115,9 +110,8 @@ public class ImageService {
         }
     }
 
-    //Get single address record
-    public ImageDto getSingleAddress(String imageSeq) {
-        LOGGER.info("Enter getSingleAddress() in AddressService.");
+    public ImageDto getSingleImageByID(String imageSeq) {
+        LOGGER.info("Enter getSingleImage() in ImageService. " + CurrentUser.getUser().getEmail());
         ImageDto imageDto = new ImageDto();
         try {
             Image image = this.imageRepository.findByImageSeqAndStatusSeq(imageSeq, Status.APPROVED.getStatusSeq());
@@ -125,8 +119,26 @@ public class ImageService {
                 BeanUtils.copyProperties(image, imageDto);
             }
         } catch (Exception e) {
-            throw new BadRequestException(e.getMessage());
+            throw new BadResponseException(e.getMessage());
         }
         return imageDto;
+    }
+
+    public List<ImageDto> getAllImageList() {
+        LOGGER.info("Enter getAllImageList() in ImageService. " + CurrentUser.getUser().getEmail());
+        List<ImageDto> imageDtoList = new ArrayList<>();
+        try {
+            List<Image> imageList = this.imageRepository.findAll();
+            if (imageList != null) {
+                for (Image image : imageList) {
+                    ImageDto imageDto = new ImageDto();
+                    BeanUtils.copyProperties(image, imageDto);
+                    imageDtoList.add(imageDto);
+                }
+            }
+            return imageDtoList;
+        } catch (Exception e) {
+            throw new BadResponseException(e.getMessage());
+        }
     }
 }

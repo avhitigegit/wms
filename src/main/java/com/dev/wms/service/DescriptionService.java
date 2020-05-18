@@ -4,6 +4,7 @@ import com.dev.wms.common.CurrentUser;
 import com.dev.wms.common.enums.Status;
 import com.dev.wms.dto.DescriptionDto;
 import com.dev.wms.exception.BadRequestException;
+import com.dev.wms.exception.BadResponseException;
 import com.dev.wms.model.Description;
 import com.dev.wms.repository.DescriptionRepository;
 import org.apache.logging.log4j.LogManager;
@@ -18,7 +19,7 @@ import java.util.List;
 
 @Service
 public class DescriptionService {
-    private static final Logger LOGGER = LogManager.getLogger(LocationService.class);
+    private static final Logger LOGGER = LogManager.getLogger(DescriptionService.class);
 
     private final DescriptionRepository descriptionRepository;
 
@@ -27,9 +28,8 @@ public class DescriptionService {
         this.descriptionRepository = descriptionRepository;
     }
 
-    //Save my address
-    public void saveAddress(DescriptionDto descriptionDto) {
-        LOGGER.info("Enter saveAddress() in AddressService.");
+    public void saveDescription(DescriptionDto descriptionDto) {
+        LOGGER.info("Enter saveDescription() in DescriptionService. " + CurrentUser.getUser().getEmail());
         try {
             if (descriptionDto != null) {
                 Description description = new Description();
@@ -42,9 +42,8 @@ public class DescriptionService {
         }
     }
 
-    //Save my address list
-    public void saveAddressList(List<DescriptionDto> locationDtoList) {
-        LOGGER.info("Enter saveAddressList() in AddressService.");
+    public void saveDescriptionList(List<DescriptionDto> locationDtoList) {
+        LOGGER.info("Enter saveDescriptionList() in DescriptionService. " + CurrentUser.getUser().getEmail());
         try {
             if (locationDtoList != null) {
                 for (DescriptionDto descriptionDto : locationDtoList) {
@@ -59,9 +58,8 @@ public class DescriptionService {
         }
     }
 
-    //Get my all addresses
-    public List<DescriptionDto> getMyAddresses() {
-        LOGGER.info("Enter getMyAddresses() in AddressService.");
+    public List<DescriptionDto> getMyDescriptionList() {
+        LOGGER.info("Enter getMyDescriptionList() in DescriptionService. " + CurrentUser.getUser().getEmail());
         List<DescriptionDto> locationDtoList = new ArrayList<>();
         try {
             List<Description> locationList = descriptionRepository.findByUserSeqAndStatusSeq(CurrentUser.getUser().getUserSeq(), Status.APPROVED.getStatusSeq());
@@ -74,13 +72,12 @@ public class DescriptionService {
             }
             return locationDtoList;
         } catch (Exception e) {
-            throw new BadRequestException(e.getMessage());
+            throw new BadResponseException(e.getMessage());
         }
     }
 
-    //Update my address record
-    public DescriptionDto updateAddress(DescriptionDto tempDescriptionDto) {
-        LOGGER.info("Enter updateAddress() in AddressService.");
+    public DescriptionDto updateDescription(DescriptionDto tempDescriptionDto) {
+        LOGGER.info("Enter updateDescription() in DescriptionService. " + CurrentUser.getUser().getEmail());
         try {
             if (tempDescriptionDto.getDescriptionSeq() != null) {
                 Description description = this.descriptionRepository.findByDescriptionSeqAndStatusSeq(tempDescriptionDto.getDescriptionSeq(), Status.APPROVED.getStatusSeq());
@@ -98,12 +95,11 @@ public class DescriptionService {
         } catch (BadRequestException e) {
             throw new BadRequestException(e.getMessage());
         }
-        return this.getSingleAddress(tempDescriptionDto.getDescriptionSeq());
+        return this.getSingleDescriptionByID(tempDescriptionDto.getDescriptionSeq());
     }
 
-    //Delete my address record
-    public void deactivateAddress(DescriptionDto descriptionDto) {
-        LOGGER.info("Enter deactivateAddress() in AddressService.");
+    public void deactivateDescription(DescriptionDto descriptionDto) {
+        LOGGER.info("Enter deactivateDescription() in DescriptionService. " + CurrentUser.getUser().getEmail());
         try {
             Description description = this.descriptionRepository.findByDescriptionSeqAndStatusSeq(descriptionDto.getDescriptionSeq(), Status.APPROVED.getStatusSeq());
             if (description != null) {
@@ -116,9 +112,8 @@ public class DescriptionService {
         }
     }
 
-    //Get single address record
-    public DescriptionDto getSingleAddress(String descriptionSeq) {
-        LOGGER.info("Enter getSingleAddress() in AddressService.");
+    public DescriptionDto getSingleDescriptionByID(String descriptionSeq) {
+        LOGGER.info("Enter getSingleAddress() in DescriptionService. " + CurrentUser.getUser().getEmail());
         DescriptionDto descriptionDto = new DescriptionDto();
         try {
             Description description = this.descriptionRepository.findByDescriptionSeqAndStatusSeq(descriptionSeq, Status.APPROVED.getStatusSeq());
@@ -126,8 +121,26 @@ public class DescriptionService {
                 BeanUtils.copyProperties(description, descriptionDto);
             }
         } catch (Exception e) {
-            throw new BadRequestException(e.getMessage());
+            throw new BadResponseException(e.getMessage());
         }
         return descriptionDto;
+    }
+
+    public List<DescriptionDto> getAllDescriptionList() {
+        LOGGER.info("Enter getAllDescriptionList() in DescriptionService. " + CurrentUser.getUser().getEmail());
+        List<DescriptionDto> descriptionDtoList = new ArrayList<>();
+        try {
+            List<Description> descriptionList = this.descriptionRepository.findAll();
+            if (descriptionList != null) {
+                for (Description description : descriptionList) {
+                    DescriptionDto descriptionDto = new DescriptionDto();
+                    BeanUtils.copyProperties(description, descriptionDto);
+                    descriptionDtoList.add(descriptionDto);
+                }
+            }
+            return descriptionDtoList;
+        } catch (Exception e) {
+            throw new BadResponseException(e.getMessage());
+        }
     }
 }

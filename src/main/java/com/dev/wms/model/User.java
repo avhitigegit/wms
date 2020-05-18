@@ -80,25 +80,27 @@ public class User implements Serializable {
     @Transient
     private List<String> locationListSeq;
 
-    public static UserDto setUserInRegistration(User originalUser, UserDto userDto) {
-        userDto.setUserSeq(originalUser.getUserSeq());
-        userDto.setEmail(originalUser.getEmail());
-        userDto.setPassword(originalUser.getPassword());
-        userDto.setFirstName(originalUser.getFirstName());
-        userDto.setMiddleName(originalUser.getMiddleName());
-        userDto.setLastName(originalUser.getLastName());
-        userDto.setOtherNames(originalUser.getOtherNames());
-        userDto.setTitle(originalUser.getTitle());
-        userDto.setDescriptionPictureUrl(originalUser.getDescriptionPictureUrl());
-        userDto.setDateOfBirth(originalUser.getDateOfBirth());
-        userDto.setEmailVerifiedCode(originalUser.getEmailVerifiedCode());
-        userDto.setPasswordVerifiedCode(originalUser.getPasswordVerifiedCode());
-        userDto.setIsEmailVerified(originalUser.getIsEmailVerified());
-        userDto.setIsPasswordReset(originalUser.getIsPasswordReset());
-        userDto.setStatusSeq(originalUser.getStatusSeq());
-        userDto.setRoleSeq(originalUser.getRoleSeq());
-        userDto.setCreatedAt(originalUser.getCreatedAt());
-        userDto.setUpdatedAt(originalUser.getUpdatedAt());
+    public static UserDto setUserInRegistration(User dbUser, UserDto userDto) {
+        userDto.setUserSeq(dbUser.getUserSeq());
+        userDto.setEmail(dbUser.getEmail());
+        userDto.setPassword(dbUser.getPassword());
+        userDto.setEmailVerifiedCode(dbUser.getEmailVerifiedCode());
+        userDto.setPasswordVerifiedCode(dbUser.getPasswordVerifiedCode());
+        userDto.setIsEmailVerified(dbUser.getIsEmailVerified());
+        userDto.setIsPasswordReset(dbUser.getIsPasswordReset());
+        userDto.setStatusSeq(dbUser.getStatusSeq());
+        userDto.setRoleSeq(dbUser.getRoleSeq());
+        userDto.setCreatedAt(dbUser.getCreatedAt());
+        userDto.setUpdatedAt(dbUser.getUpdatedAt());
+
+//        userDto.setFirstName(dbUser.getFirstName());
+//        userDto.setMiddleName(dbUser.getMiddleName());
+//        userDto.setLastName(dbUser.getLastName());
+//        userDto.setOtherNames(dbUser.getOtherNames());
+//        userDto.setTitle(dbUser.getTitle());
+//        userDto.setDescriptionPictureUrl(dbUser.getDescriptionPictureUrl());
+//        userDto.setDateOfBirth(dbUser.getDateOfBirth());
+
         return userDto;
     }
 

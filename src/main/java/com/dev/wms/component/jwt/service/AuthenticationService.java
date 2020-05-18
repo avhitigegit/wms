@@ -44,30 +44,33 @@ public class AuthenticationService {
     public User registerUserAndSendEmail(SignUpDto signUpDto) {
         LOGGER.info("Enter registerUserAndSendEmail() in AuthenticationService.");
         User user = new User();
-        if (signUpDto.getRole().equals(Role.CUSTOMER.getRole())) {
-            user.setRoleSeq(Role.CUSTOMER.getRoleSeq());
-        } else if (signUpDto.getRole().equals(Role.VENDOR.getRole())) {
-            user.setRoleSeq(Role.VENDOR.getRoleSeq());
-        }
-        BeanUtils.copyProperties(signUpDto, user);
-        if (this.utilService.checkUserAvailability(user.getEmail()) == false) {
-            user = User.initFrom(user);
-            this.userRepository.saveAndFlush(user);
-            String token = this.jwtTokenUtil.generateTokenWithPinAndEmail(user);
-            String emailBody = AppConstant.EMAIL_VERIFICATION_BODY + token;
-            this.emailService.sendEmail(user.getEmail(), AppConstant.EMAIL_VERIFICATION_SUBJECT, emailBody);
-            user.setPasswordVerifiedCode(emailBody);
+        try {
+            if (signUpDto.getRole().equals(Role.CUSTOMER.getRole())) {
+                user.setRoleSeq(Role.CUSTOMER.getRoleSeq());
+            } else if (signUpDto.getRole().equals(Role.VENDOR.getRole())) {
+                user.setRoleSeq(Role.VENDOR.getRoleSeq());
+            }
+            BeanUtils.copyProperties(signUpDto, user);
+            if (this.utilService.checkUserAvailability(user.getEmail()) == false) {
+                user = User.initFrom(user);
+                this.userRepository.saveAndFlush(user);
+                String token = this.jwtTokenUtil.generateTokenWithPinAndEmail(user);
+                String emailBody = AppConstant.EMAIL_VERIFICATION_BODY + token;
+                this.emailService.sendEmail(user.getEmail(), AppConstant.EMAIL_VERIFICATION_SUBJECT, emailBody);
+                user.setPasswordVerifiedCode(emailBody);
+//                return user;
+            } else if (this.userRepository.findByEmailAndStatusSeq(user.getEmail(), Status.PENDING.getStatusSeq()).getEmail().equals(user.getEmail())) {
+                user = this.userRepository.findByEmailAndStatusSeq(user.getEmail(), Status.PENDING.getStatusSeq());
+                this.userRepository.save(user);
+                String token = this.jwtTokenUtil.generateTokenWithPinAndEmail(user);
+                String emailBody = AppConstant.EMAIL_VERIFICATION_BODY + token;
+                this.emailService.sendEmail(user.getEmail(), AppConstant.EMAIL_VERIFICATION_SUBJECT, emailBody);
+                user.setPasswordVerifiedCode(emailBody);
+//                return user;
+            }
             return user;
-        } else if (this.userRepository.findByEmailAndStatusSeq(user.getEmail(), Status.PENDING.getStatusSeq()).getEmail().equals(user.getEmail())) {
-            user = this.userRepository.findByEmailAndStatusSeq(user.getEmail(), Status.PENDING.getStatusSeq());
-            this.userRepository.save(user);
-            String token = this.jwtTokenUtil.generateTokenWithPinAndEmail(user);
-            String emailBody = AppConstant.EMAIL_VERIFICATION_BODY + token;
-            this.emailService.sendEmail(user.getEmail(), AppConstant.EMAIL_VERIFICATION_SUBJECT, emailBody);
-            user.setPasswordVerifiedCode(emailBody);
-            return user;
-        } else {
-            throw new BadRequestException("The Request Cannot Be Fulfilled Due To Bad Syntax Exception.");
+        } catch (Exception e) {
+            throw new BadRequestException(e.getMessage());
         }
     }
 
@@ -76,19 +79,24 @@ public class AuthenticationService {
         List<String> UserEmailAndPinFromToken = this.jwtTokenUtil.getUserEmailAndPinFromToken(token);
         String generatedPinOfToken = UserEmailAndPinFromToken.get(0);
         String userEmailOfToken = UserEmailAndPinFromToken.get(1);
-        User user = this.userRepository.findByEmailAndStatusSeq(userEmailOfToken, Status.PENDING.getStatusSeq());
-        if (user != null) {
-            if (this.utilService.matchingEmailGeneratedPinWithActual(userEmailOfToken, generatedPinOfToken) == true && user.getStatusSeq().equals(Status.PENDING.getStatusSeq())) {
-                user.setIsEmailVerified(true);
-                user.setStatusSeq(Status.APPROVED.getStatusSeq());
-                user.setRoleSeq(Role.VENDOR.getRoleSeq());
-                this.userRepository.saveAndFlush(user);
-                user = this.userRepository.findByEmailAndStatusSeq(userEmailOfToken, Status.APPROVED.getStatusSeq());
+        User user = null;
+        try {
+            user = this.userRepository.findByEmailAndStatusSeq(userEmailOfToken, Status.PENDING.getStatusSeq());
+            if (user != null) {
+                if (this.utilService.matchingEmailGeneratedPinWithActual(userEmailOfToken, generatedPinOfToken) == true && user.getStatusSeq().equals(Status.PENDING.getStatusSeq())) {
+                    user.setIsEmailVerified(true);
+                    user.setStatusSeq(Status.APPROVED.getStatusSeq());
+                    user.setRoleSeq(Role.VENDOR.getRoleSeq());
+                    this.userRepository.saveAndFlush(user);
+                    user = this.userRepository.findByEmailAndStatusSeq(userEmailOfToken, Status.APPROVED.getStatusSeq());
+                } else {
+                    throw new BadResponseException("The Request Cannot Be Fulfilled Due To Bad Syntax Exception.");
+                }
             } else {
-                throw new BadResponseException("The Request Cannot Be Fulfilled Due To Bad Syntax Exception.");
+                throw new BadResponseException("Resource Not Found Exception.");
             }
-        } else {
-            throw new BadResponseException("Resource Not Found Exception.");
+        } catch (Exception e) {
+            throw new BadResponseException(e.getMessage());
         }
         return user;
     }
@@ -107,19 +115,6 @@ public class AuthenticationService {
             throw new UnauthorizedException("Authentication Failed. Your Username incorrect");
         }
     }
-
-//    public String deactivateOwnProfile() {
-//        LOGGER.info("Enter deactivateOwnProfile() in UserService.");
-//        String deactivateStatus = null;
-//        User user = this.userRepository.findByUserSeqAndStatusSeq(CurrentUser.getUser().getUserSeq(), Status.APPROVED.getStatusSeq());
-//        if (user.getEmail() != null) {
-//            deactivateStatus = "Deactivate User Successfully.";
-//            this.userRepository.deleteById(user.getUserSeq());
-//            return deactivateStatus;
-//        } else {
-//            throw new BadResponseException("Resource Not Found Exception.");
-//        }
-//    }
 
     public String sendEmailForPasswordResetRequest(String email) {
         LOGGER.info("Enter sendEmailForPasswordResetRequest() in UserService.");

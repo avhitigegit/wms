@@ -74,13 +74,6 @@ public class AuthenticationController {
         return ResponseEntity.ok(status);
     }
 
-//    //Deactivate own profile
-//    @RequestMapping(value = "/account", method = RequestMethod.DELETE)
-//    public ResponseEntity<String> deactivateOwnProfile() {
-//        LOGGER.info("Enter deactivateOwnProfile() in UserController.");
-//        String deactivateStatus = this.authenticationService.deactivateOwnProfile();
-//        return ResponseEntity.ok().body(deactivateStatus);
-//    }
 
     @GetMapping("/pwd-reset")
     public ResponseEntity<String> sendEmailForPasswordResetRequest(@RequestParam("email") String email) {
