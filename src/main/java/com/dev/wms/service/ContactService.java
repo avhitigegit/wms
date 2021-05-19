@@ -11,6 +11,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -27,15 +29,17 @@ public class ContactService {
         this.contactRepository = contactRepository;
     }
 
-    public void saveContact(ContactDto contactDto) {
+    public ContactDto saveContact(ContactDto contactDto) {
         LOGGER.info("Enter saveContact() in ContactService. " + CurrentUser.getUser().getEmail());
         try {
             if (contactDto != null) {
                 Contact contact = new Contact();
                 BeanUtils.copyProperties(contactDto, contact);
                 Contact.initFrom(contact);
-                this.contactRepository.save(contact);
+                Contact contactDb = this.contactRepository.save(contact);
+                BeanUtils.copyProperties(contactDb, contactDto);
             }
+            return contactDto;
         } catch (Exception e) {
             throw new BadRequestException(e.getMessage());
         }
@@ -96,19 +100,23 @@ public class ContactService {
         return this.getSingleContactByID(tempContactDto.getContactSeq());
     }
 
-    public void deactivateContact(ContactDto contactDto) {
+    public ResponseEntity<Contact> deactivateContact(ContactDto contactDto) {
         LOGGER.info("Enter deactivateContact() in ContactService. " + CurrentUser.getUser().getEmail());
         try {
+            ResponseEntity<Contact> responseEntity;
             Contact contact = this.contactRepository.findByContactSeqAndStatusSeq(contactDto.getContactSeq(), Status.APPROVED.getStatusSeq());
             if (contact != null) {
                 contact.setStatusSeq(Status.DELETED.getStatusSeq());
                 contact.setUserSeq(CurrentUser.getUser().getUserSeq());
                 this.contactRepository.save(contact);
+                responseEntity = new ResponseEntity<>(HttpStatus.OK);
+            } else {
+                responseEntity = new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
+            return responseEntity;
         } catch (Exception e) {
             throw new BadRequestException(e.getMessage());
         }
-
     }
 
     public ContactDto getSingleContactByID(String contactSeq) {

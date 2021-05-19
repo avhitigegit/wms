@@ -12,6 +12,8 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -28,15 +30,17 @@ public class ImageService {
         this.imageRepository = imageRepository;
     }
 
-    public void saveImage(ImageDto imageDto) {
+    public ImageDto saveImage(ImageDto imageDto) {
         LOGGER.info("Enter saveImage() in ImageService. " + CurrentUser.getUser().getEmail());
         try {
             if (imageDto != null) {
                 Image image = new Image();
                 BeanUtils.copyProperties(imageDto, image);
                 Image.initFrom(image);
-                imageRepository.save(image);
+                Image imageDb = imageRepository.save(image);
+                BeanUtils.copyProperties(imageDb, imageDto);
             }
+            return imageDto;
         } catch (Exception e) {
             throw new BadRequestException(e.getMessage());
         }
@@ -96,15 +100,20 @@ public class ImageService {
         return this.getSingleImageByID(tempImageDto.getImageSeq());
     }
 
-    public void deactivateImage(ImageDto imageDto) {
+    public ResponseEntity<Image> deactivateImage(ImageDto imageDto) {
         LOGGER.info("Enter deactivateImage() in ImageService. " + CurrentUser.getUser().getEmail());
         try {
+            ResponseEntity<Image> responseEntity;
             Image image = this.imageRepository.findByImageSeqAndStatusSeq(imageDto.getImageSeq(), Status.APPROVED.getStatusSeq());
             if (image != null) {
                 image.setStatusSeq(Status.DELETED.getStatusSeq());
                 image.setUserSeq(CurrentUser.getUser().getUserSeq());
                 this.imageRepository.save(image);
+                responseEntity = new ResponseEntity<>(HttpStatus.OK);
+            } else {
+                responseEntity = new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
+            return responseEntity;
         } catch (Exception e) {
             throw new BadRequestException(e.getMessage());
         }

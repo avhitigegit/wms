@@ -35,4 +35,5 @@ public class Type implements Serializable {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    //display for hotel, saloon, car hire, photography,
 }

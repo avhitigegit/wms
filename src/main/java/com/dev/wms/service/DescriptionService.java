@@ -12,6 +12,8 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -28,15 +30,17 @@ public class DescriptionService {
         this.descriptionRepository = descriptionRepository;
     }
 
-    public void saveDescription(DescriptionDto descriptionDto) {
+    public DescriptionDto saveDescription(DescriptionDto descriptionDto) {
         LOGGER.info("Enter saveDescription() in DescriptionService. " + CurrentUser.getUser().getEmail());
         try {
             if (descriptionDto != null) {
                 Description description = new Description();
                 BeanUtils.copyProperties(descriptionDto, description);
                 Description.initFrom(description);
-                descriptionRepository.save(description);
+                Description descriptionDb = descriptionRepository.save(description);
+                BeanUtils.copyProperties(descriptionDb, descriptionDto);
             }
+            return descriptionDto;
         } catch (Exception e) {
             throw new BadRequestException(e.getMessage());
         }
@@ -98,15 +102,20 @@ public class DescriptionService {
         return this.getSingleDescriptionByID(tempDescriptionDto.getDescriptionSeq());
     }
 
-    public void deactivateDescription(DescriptionDto descriptionDto) {
+    public ResponseEntity<Description> deactivateDescription(DescriptionDto descriptionDto) {
         LOGGER.info("Enter deactivateDescription() in DescriptionService. " + CurrentUser.getUser().getEmail());
         try {
+            ResponseEntity<Description> responseEntity;
             Description description = this.descriptionRepository.findByDescriptionSeqAndStatusSeq(descriptionDto.getDescriptionSeq(), Status.APPROVED.getStatusSeq());
             if (description != null) {
                 description.setStatusSeq(Status.DELETED.getStatusSeq());
                 description.setUserSeq(CurrentUser.getUser().getUserSeq());
                 this.descriptionRepository.save(description);
+                responseEntity = new ResponseEntity<>(HttpStatus.OK);
+            } else {
+                responseEntity = new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
+            return responseEntity;
         } catch (Exception e) {
             throw new BadRequestException(e.getMessage());
         }

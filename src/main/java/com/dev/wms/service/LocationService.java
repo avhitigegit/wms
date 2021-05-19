@@ -11,6 +11,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -27,15 +29,17 @@ public class LocationService {
         this.locationRepository = locationRepository;
     }
 
-    public void saveLocation(LocationDto locationDto) {
+    public LocationDto saveLocation(LocationDto locationDto) {
         LOGGER.info("Enter saveLocation() in LocationService. " + CurrentUser.getUser().getEmail());
         try {
             if (locationDto != null) {
                 Location location = new Location();
                 BeanUtils.copyProperties(locationDto, location);
                 Location.initFrom(location);
-                locationRepository.save(location);
+                Location locationDb = locationRepository.save(location);
+                BeanUtils.copyProperties(locationDb, locationDto);
             }
+            return locationDto;
         } catch (Exception e) {
             throw new BadRequestException(e.getMessage());
         }
@@ -100,15 +104,20 @@ public class LocationService {
         return this.getSingleLocationByID(tempLocationDto.getLocationSeq());
     }
 
-    public void deactivateLocation(LocationDto locationDto) {
+    public ResponseEntity<Location> deactivateLocation(LocationDto locationDto) {
         LOGGER.info("Enter deactivateLocation() in LocationService. " + CurrentUser.getUser().getEmail());
         try {
+            ResponseEntity<Location> responseEntity;
             Location location = this.locationRepository.findByLocationSeqAndStatusSeq(locationDto.getLocationSeq(), Status.APPROVED.getStatusSeq());
             if (location != null) {
                 location.setStatusSeq(Status.DELETED.getStatusSeq());
                 location.setUserSeq(CurrentUser.getUser().getUserSeq());
                 this.locationRepository.save(location);
+                responseEntity = new ResponseEntity<>(HttpStatus.OK);
+            } else {
+                responseEntity = new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
+            return responseEntity;
         } catch (Exception e) {
             throw new BadRequestException(e.getMessage());
         }
@@ -145,5 +154,4 @@ public class LocationService {
             throw new BadResponseException(e.getMessage());
         }
     }
-
 }
